@@ -47,6 +47,10 @@ layout = [
         expand_x=True,
         expand_y=True,
     )],
+    [sg.Text('Add Subject:')],
+    [sg.Text('Subject:'), sg.Input('', enable_events=True, size=(10, 1), key='-SUBJECT_CODE-', font=('Arial Bold', 20), justification='right'), 
+     sg.Text('Subject Name:'), sg.Input('', enable_events=True, size=(10, 1), key='-SUBJECT_NAME-', font=('Arial Bold', 20), justification='right')],
+    [sg.Button('Insert Subject')],
     [sg.Text('Subject:'), sg.Combo(subject_list, default_value=subject_list[0], key='-SUBJECT-', font=('Arial Bold', 14), enable_events=True,  readonly=False)],
     [sg.Text('Name:'), sg.Input('', enable_events=True, size=(10, 1), key='-NAME-', font=('Arial Bold', 20), justification='right')],
     [sg.Text('Quiz 1:'), sg.Input('', enable_events=True, size=(2,1), key='-QUIZ_1-', font=('Arial Bold', 20), justification='right')],
@@ -56,6 +60,13 @@ layout = [
 ]
 
 window=sg.Window("Gradebook", layout, size=(600, 600), resizable=True)
+
+def insert_subject(subject_code, subject_name, tree_element):
+    data.append(["",subject_code, subject_name, "", "", ""])
+    tree_data = generate_tree_data_object(data)
+    tree_element.update(tree_data)
+    subject_list=extract_subjects(data)
+    return subject_list
 
 def insert_record(subject, name, scores, tree_element):
     for i in range(len(data)):
@@ -80,6 +91,10 @@ while True:
     event, values = window.read()
     if event == sg.WIN_CLOSED:
       break
+    elif event == 'Insert Subject':
+        tree_element = window['-TREE-']
+        new_subject_list = insert_subject(values['-SUBJECT_CODE-'], values['-SUBJECT_NAME-'], tree_element)
+        window['-SUBJECT-'].update(value=new_subject_list[0], values=new_subject_list)
     elif event == 'Insert':
         tree_element = window['-TREE-']
         insert_record(values['-SUBJECT-'], values['-NAME-'], [values['-QUIZ_1-'], values['-ASSIGN_1-'], values['-QUIZ_2-']], tree_element)
