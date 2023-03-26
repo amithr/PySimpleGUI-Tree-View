@@ -1,5 +1,7 @@
 import PySimpleGUI as sg
 
+sg.set_options(font=("Arial Bold", 14))
+
 data = [
    ["","BIO", "Biology", "", "", ""],
    ["BIO", "ADR-BIO", "Adrian", 97, 83, 92],
@@ -12,3 +14,91 @@ data = [
 ]
 
 headings = ['Quiz 1','Homework 1','Quiz 2']
+
+def generate_tree_data_object():
+   tree_data = sg.TreeData()
+   for row in data:
+      tree_data.Insert(row[0], row[1], row[2], row[3:])
+   return tree_data
+
+def extract_subjects():
+   subjects = []
+   for i in range(len(data)):
+      if data[i][0] == "":
+         subjects.append(data[i][1])
+   return subjects
+
+subject_list = extract_subjects()
+
+layout = [
+   [sg.Tree(
+      data=generate_tree_data_object(),
+      headings=headings,
+      auto_size_columns=True,
+      select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
+      num_rows=10,
+      key='-TREE-',
+      show_expanded=True,
+      enable_events=True,
+      expand_x=True,
+      expand_y=True
+   ),
+   ],
+   [sg.Text('Add Subject:')],
+   [sg.Text('Subject:'), sg.Input('', enable_events=True, size=(10, 1), key='-SUBJECT_CODE-', font=('Arial Bold', 20), justification='right'),
+    sg.Text('Subject Name:'), sg.Input('', enable_events=True, size=(10, 1), key='-SUBJECT_NAME-', font=('Arial Bold', 20), justification='right')
+   ],
+   [sg.Button('Insert Subject')],
+   [sg.Text('Subject:'), sg.Combo(subject_list, default_value=subject_list[0], key='-SUBJECT-', font=('Arial Bold', 14), enable_events=True,  readonly=True)],
+   [sg.Text('Name:'), sg.Input('', enable_events=True, size=(10, 1), key='-NAME-', font=('Arial Bold', 20), justification='right')],
+   [sg.Text('Quiz 1:'), sg.Input('', enable_events=True, size=(2,1), key='-QUIZ_1-', font=('Arial Bold', 20), justification='right')],
+   [sg.Text('Assignment 1:'), sg.Input('', enable_events=True, size=(2,1), key='-ASSIGN_1-', font=('Arial Bold', 20), justification='right')],
+   [sg.Text('Quiz 2:'), sg.Input('', enable_events=True, size=(2,1), key='-QUIZ_2-', font=('Arial Bold', 20), justification='right')],
+   [sg.Button('Insert'), sg.Button('Delete')]
+
+]
+
+def insert_subject(subject_code, subject_name, tree_element):
+   data.append(["", subject_code, subject_name, "", "", ""])
+   tree_data = generate_tree_data_object()
+   tree_element.update(tree_data)
+   subject_list = extract_subjects()
+   return subject_list
+
+def insert_record(subject_code, name, scores, tree_element):
+   for i in range(len(data)):
+      if data[i][0] == "" and data[i][1] == subject_code:
+         j = i + 1
+         while (j < len(data)) and (data[j][0] == data[i][1]):
+            j += 1
+         data.insert(j, [subject_code, name[0:2], name, scores[0], scores[1], scores[2]])
+         tree_data = generate_tree_data_object()
+         tree_element.update(tree_data)
+   
+def delete_record(selected_row_code, tree_element):
+   for row in data:
+      if selected_row_code == row[1]:
+         data.remove(row)
+   tree_data = generate_tree_data_object()
+   tree_element.update(tree_data)
+
+window = sg.Window("Gradebook", layout, size=(600, 600), resizable=True)
+
+selected_row_code = ""
+while True:
+   event, values=window.read()
+   if event == sg.WIN_CLOSED:
+      break
+   elif event == '-TREE-':
+      selected_row_code = values['-TREE-'][0]
+   elif event == 'Insert Subject':
+      tree_element = window['-TREE-']
+      new_subject_list = insert_subject(values['-SUBJECT_CODE-'], values['-SUBJECT_NAME-'], tree_element)
+      window['-SUBJECT-'].update(value=new_subject_list[0], values=new_subject_list)
+   elif event == 'Insert':
+      tree_element = window['-TREE-']
+      insert_record(values['-SUBJECT-'], values['-NAME-'], [values['-QUIZ_1-'], values['-ASSIGN_1-'], values['-QUIZ_2-']], tree_element)
+   elif event == 'Delete':
+      tree_element = window['-TREE-']
+      delete_record(selected_row_code, tree_element)
+window.close()
